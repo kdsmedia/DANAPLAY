@@ -1,0 +1,11 @@
+{
+  "name": "DANAPLAY",
+  "short_name": "DANAPLAY",
+  "description": "Platform reward - dapatkan poin dengan menyelesaikan campaign aplikasi/game",
+  "start_url": "/mobile/",
+  "display": "standalone",
+  "background_color": "#0B5FFF",
+  "theme_color": "#0B5FFF",
+  "orientation": "portrait",
+  "icons": []
+}
