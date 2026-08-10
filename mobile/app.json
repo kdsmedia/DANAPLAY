@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "DANAPLAY",
+    "slug": "danaplay",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "danaplay",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0B5FFF",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.danaplay.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B5FFF"
+      },
+      "package": "com.danaplay.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "apiBaseUrl": "http://localhost:12000"
+    }
+  }
+}
