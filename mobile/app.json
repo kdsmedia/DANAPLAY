@@ -35,7 +35,7 @@
       "router": {
         "origin": false
       },
-      "apiBaseUrl": "http://localhost:12000"
+      "apiBaseUrl": "https://work-1-wjdyyqducsjxeigt.prod-runtime.all-hands.dev"
     }
   }
 }
