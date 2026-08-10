@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Pressable, DimensionValue } from 'react-native';
 import { theme, statusInfo } from './utils';
 
 export function Button({
@@ -42,7 +42,7 @@ export function Progress({ value, total }: { value: number; total: number }) {
   return (
     <View>
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: pct + '%' }]} />
+        <View style={[styles.progressFill, { width: (pct + '%') as DimensionValue }]} />
       </View>
     </View>
   );

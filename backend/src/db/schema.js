@@ -249,6 +249,49 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ============ Ads (dynamic ad inventory) ============
+CREATE TABLE IF NOT EXISTS ads (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  advertiser TEXT NOT NULL DEFAULT '',
+  -- Creative is a placeholder URL/data. Real ad SDK integration replaces this later.
+  creative_url TEXT NOT NULL DEFAULT '',
+  duration_seconds INTEGER NOT NULL DEFAULT 30,   -- full ad length
+  reward_points INTEGER NOT NULL,                  -- snapshot of reward at view time (defaults to config)
+  weight INTEGER NOT NULL DEFAULT 1,               -- selection weight for dynamic serving
+  status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','PAUSED','ARCHIVED')),
+  start_date TEXT,
+  end_date TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_ads_status ON ads(status);
+
+-- ============ Ad views (per-user ad watch sessions) ============
+CREATE TABLE IF NOT EXISTS ad_views (
+  id TEXT PRIMARY KEY,
+  view_token TEXT NOT NULL UNIQUE,                 -- idempotency key for completion
+  user_id TEXT NOT NULL,
+  ad_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'STARTED' CHECK (status IN ('STARTED','COMPLETED','EXPIRED','FAILED')),
+  reward_granted INTEGER NOT NULL DEFAULT 0,        -- 0 until EARN posted; ensures single reward
+  started_at TEXT NOT NULL DEFAULT (datetime('now')),
+  completed_at TEXT,
+  expires_at TEXT NOT NULL,                         -- started_at + ttl
+  -- Server-validated watch proof. Client never controls reward; this records server's own
+  -- elapsed-time check (started_at -> completed_at >= min watch). skipped flag set if client
+  -- tried to complete before minimum watch elapsed.
+  skipped INTEGER NOT NULL DEFAULT 0,
+  failure_reason TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (ad_id) REFERENCES ads(id)
+);
+CREATE INDEX IF NOT EXISTS idx_ad_views_user ON ad_views(user_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_ad_views_token ON ad_views(view_token);
+CREATE INDEX IF NOT EXISTS idx_ad_views_daily ON ad_views(user_id, date(started_at));
 `;
 
 const SEED_SETTINGS = `

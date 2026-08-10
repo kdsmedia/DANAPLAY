@@ -5,6 +5,7 @@ import { useAuth } from '../../src/auth';
 import { API } from '../../src/api';
 import { theme, fmtPts, fmtRp } from '../../src/utils';
 import { Card, Button, Badge, Progress, EmptyState, Loading } from '../../src/components';
+import { AdViewer } from '../../src/AdViewer';
 
 export default function HomeScreen() {
   const { user, balance, refreshBalance } = useAuth();
@@ -13,19 +14,24 @@ export default function HomeScreen() {
   const [available, setAvailable] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [adProgress, setAdProgress] = useState<any>(null);
+  const [adModal, setAdModal] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [a, c] = await Promise.all([API.campaigns.myActive(), API.campaigns.list()]);
+      const [a, c, ad] = await Promise.all([API.campaigns.myActive(), API.campaigns.list(), API.ads.dailyProgress()]);
       setActive((a.items || []).filter((x) => ['CLICKED', 'INSTALLED', 'ACTIVE'].includes(x.status)).slice(0, 2));
       const enrolled = new Set((a.items || []).map((x) => x.campaign_id));
       setAvailable((c.items || []).filter((x) => !enrolled.has(x.id)).slice(0, 3));
+      setAdProgress(ad);
     } catch {} finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { load(); refreshBalance(); }, [load, refreshBalance]);
 
   const onRefresh = () => { setRefreshing(true); load(); refreshBalance(); };
+
+  const adPct = adProgress ? Math.round((adProgress.completedToday / adProgress.limit) * 100) : 0;
 
   return (
     <View style={styles.flex}>
@@ -48,6 +54,37 @@ export default function HomeScreen() {
         </View>
       </View>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}>
+        {adProgress && (
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionTitle}>Tugas Harian</Text>
+            <Text style={styles.seeAll}>{adProgress.completedToday}/{adProgress.limit} hari ini</Text>
+          </View>
+        )}
+        {adProgress && (
+          <TouchableOpacity onPress={() => adProgress.remaining > 0 && setAdModal(true)} disabled={adProgress.remaining === 0}>
+            <Card style={styles.adCard}>
+              <View style={styles.adCardTop}>
+                <Text style={styles.adIcon}>📺</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.adCardTitle}>Tonton Iklan</Text>
+                  <Text style={styles.adCardSub}>1x tonton = ⭐ {fmtPts(adProgress.rewardPerView)} poin · max {adProgress.limit}x/hari</Text>
+                </View>
+                {adProgress.remaining > 0 ? (
+                  <View style={styles.adPlayBtn}><Text style={styles.adPlayTxt}>▶</Text></View>
+                ) : (
+                  <View style={[styles.adPlayBtn, styles.adPlayDone]}><Text style={styles.adPlayTxt}>✓</Text></View>
+                )}
+              </View>
+              <View style={styles.adProgressRow}>
+                <Progress value={adProgress.completedToday} total={adProgress.limit} />
+              </View>
+              <View style={styles.adEarnedRow}>
+                <Text style={styles.adEarnedLabel}>Hari ini terkumpul</Text>
+                <Text style={styles.adEarnedVal}>⭐ {fmtPts(adProgress.earnedToday)} poin</Text>
+              </View>
+            </Card>
+          </TouchableOpacity>
+        )}
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Campaign Aktif</Text>
           <TouchableOpacity onPress={() => router.push('/my-campaigns')}><Text style={styles.seeAll}>Lihat semua</Text></TouchableOpacity>
@@ -92,6 +129,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      <AdViewer
+        visible={adModal}
+        onClose={() => setAdModal(false)}
+        onRewarded={async () => { await refreshBalance(); const ad = await API.ads.dailyProgress(); setAdProgress(ad); }}
+      />
     </View>
   );
 }
@@ -121,4 +163,16 @@ const styles = StyleSheet.create({
   activeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   progressLabel: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   progressText: { fontSize: 12, color: theme.muted },
+  adCard: { padding: 16 },
+  adCardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  adIcon: { fontSize: 28 },
+  adCardTitle: { fontSize: 15, fontWeight: '700', color: theme.text },
+  adCardSub: { fontSize: 11, color: theme.muted, marginTop: 2 },
+  adPlayBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.primary, alignItems: 'center', justifyContent: 'center' },
+  adPlayDone: { backgroundColor: theme.success },
+  adPlayTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  adProgressRow: { marginTop: 14 },
+  adEarnedRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  adEarnedLabel: { fontSize: 12, color: theme.muted },
+  adEarnedVal: { fontSize: 13, fontWeight: '700', color: theme.success },
 });

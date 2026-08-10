@@ -175,6 +175,44 @@ async function main() {
   r = await req('POST', '/api/points/balance', { token, body: { points: 99999999 } });
   assert(r.status === 404, 'no client-side balance mutation endpoint');
 
+  console.log('[Ads] Daily ad task');
+  r = await req('GET', '/api/ads/daily', { token });
+  assert(r.status === 200 && r.json.data.remaining === r.json.data.limit, 'daily progress starts fresh');
+  assert(r.json.data.limit === 50 && r.json.data.rewardPerView === 1000, 'limit 50 / 1000 pts per view');
+
+  r = await req('GET', '/api/ads', { token });
+  assert(r.status === 200 && r.json.data.items.length > 0, 'dynamic ad inventory available');
+
+  console.log('[Ads] Skip rejected (no reward)');
+  const balBeforeAd = (await req('GET', '/api/points/balance', { token })).json.data.points;
+  r = await req('POST', '/api/ads/start', { token });
+  assert(r.status === 201 && r.json.data.viewToken, 'ad view session started');
+  const skipToken = r.json.data.viewToken;
+  r = await req('POST', `/api/ads/view/${skipToken}/complete`, { token });
+  assert(r.status === 422 && r.json.success === false, 'completing too fast rejected (no-skip)');
+  const balAfterSkip = (await req('GET', '/api/points/balance', { token })).json.data.points;
+  assert(balAfterSkip === balBeforeAd, 'no reward on skip');
+
+  console.log('[Ads] Full watch rewarded (idempotent)');
+  r = await req('POST', '/api/ads/start', { token });
+  const watchToken = r.json.data.viewToken;
+  await new Promise(rr => setTimeout(rr, (r.json.data.minWatchSeconds + 1) * 1000));
+  r = await req('POST', `/api/ads/view/${watchToken}/complete`, { token });
+  assert(r.status === 200 && r.json.data.rewardGranted === 1000, 'full watch grants 1000 pts');
+  const balAfterReward = (await req('GET', '/api/points/balance', { token })).json.data.points;
+  assert(balAfterReward === balBeforeAd + 1000, 'balance increased by 1000');
+  r = await req('POST', `/api/ads/view/${watchToken}/complete`, { token });
+  assert(r.status === 200 && r.json.data.alreadyCompleted === true && r.json.data.rewardGranted === 0, 'idempotent: no double reward');
+
+  console.log('[Ads] Cooldown blocks immediate next start');
+  r = await req('POST', '/api/ads/start', { token });
+  assert(r.status === 429, 'cooldown enforced after rewarded view');
+
+  console.log('[Ads] Ledger records ad reward');
+  r = await req('GET', '/api/points/transactions', { token });
+  const adTx = r.json.data.items.find(t => t.reference_type === 'ad_view' && t.type === 'EARN');
+  assert(adTx && adTx.amount === 1000, 'ad reward in ledger as EARN');
+
   console.log(`\n=== RESULTS: ${pass} passed, ${fail} failed ===\n`);
   closeDb();
   process.exit(fail === 0 ? 0 : 1);

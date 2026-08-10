@@ -45,6 +45,16 @@ const config = {
   rateLimitWindowMs: num(process.env.RATE_LIMIT_WINDOW_MS, 900000),
   rateLimitMax: num(process.env.RATE_LIMIT_MAX, 300),
   authRateLimitMax: num(process.env.AUTH_RATE_LIMIT_MAX, 10),
+
+  // Daily ad-watching task. 1 view = adRewardPerView points, max adDailyLimit views/day.
+  adDailyLimit: num(process.env.AD_DAILY_LIMIT, 50),
+  adRewardPerView: num(process.env.AD_REWARD_PER_VIEW, 1000),
+  // Minimum watch time (seconds) before an ad can be completed — anti-skip.
+  adMinWatchSeconds: num(process.env.AD_MIN_WATCH_SECONDS, 15),
+  // Cooldown between views (seconds) — prevents spamming.
+  adCooldownSeconds: num(process.env.AD_COOLDOWN_SECONDS, 30),
+  // Max seconds an ad view session stays valid before it expires.
+  adViewTtlSeconds: num(process.env.AD_VIEW_TTL_SECONDS, 120),
 };
 
 export default config;

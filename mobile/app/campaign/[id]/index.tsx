@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Linking, Alert, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { API } from '../../src/api';
-import { theme, fmtPts } from '../../src/utils';
-import { Card, Button, Badge, Loading, EmptyState } from '../../src/components';
+import { API } from '../../../src/api';
+import { theme, fmtPts } from '../../../src/utils';
+import { Card, Button, Badge, Loading, EmptyState } from '../../../src/components';
 
 export default function CampaignDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -98,8 +98,6 @@ export default function CampaignDetailScreen() {
     </View>
   );
 }
-
-import { TouchableOpacity } from 'react-native';
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: theme.bg },

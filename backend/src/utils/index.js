@@ -48,3 +48,17 @@ export function todayInTz(tz = 'Asia/Jakarta') {
 export function nowIso() {
   return new Date().toISOString();
 }
+
+/**
+ * Parse a stored timestamp into a Date, tolerating both ISO-with-Z (toISOString)
+ * and SQLite datetime('now') which is "YYYY-MM-DD HH:MM:SS" interpreted as UTC.
+ * Adding 'Z' only when there is no timezone designator.
+ */
+export function parseDate(value) {
+  if (value instanceof Date) return value;
+  if (typeof value !== 'string' || !value) return new Date(NaN);
+  // Has explicit timezone (Z or +/-HH:MM) -> parse as-is.
+  if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(value)) return new Date(value);
+  // SQLite format "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS" -> treat as UTC.
+  return new Date(value.replace(' ', 'T') + 'Z');
+}

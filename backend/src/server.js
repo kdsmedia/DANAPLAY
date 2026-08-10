@@ -17,6 +17,7 @@ import attributionRoutes from './routes/attribution.js';
 import withdrawalRoutes from './routes/withdrawals.js';
 import referralRoutes from './routes/referrals.js';
 import notificationRoutes from './routes/notifications.js';
+import adRoutes from './routes/ads.js';
 import adminAuthRoutes from './routes/adminAuth.js';
 import adminRoutes from './routes/admin.js';
 
@@ -124,6 +125,7 @@ app.use('/api/attribution', attributionRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/ads', adRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin', adminRoutes);
 

@@ -84,6 +84,31 @@ function seed() {
     console.log('✅ Sample campaign FIT RUN created');
   }
 
+  // Dynamic ad inventory (daily ad-watching task). Real ad creatives come from an ad SDK
+  // (AdMob/Meta Audience Network) later; these rows are placeholder inventory the backend
+  // serves dynamically by weight. reward_points snapshots the per-view reward from config.
+  const existingAd = db.prepare(`SELECT id FROM ads WHERE advertiser = ?`).get('DemoAds');
+  if (!existingAd) {
+    const ads = [
+      ['Makanan Sehat', 'Iklan restoran salad sehat', 'DemoAds', 30, config.adRewardPerView, 3],
+      ['Game Petualangan', 'Promo game RPG mobile', 'DemoAds', 30, config.adRewardPerView, 5],
+      ['E-Wallet Cashback', 'Promo cashback dompet digital', 'DemoAds', 30, config.adRewardPerView, 4],
+      ['Pulsa Murah', 'Iklan provider pulsa', 'DemoAds', 30, config.adRewardPerView, 2],
+      ['Sepatu Olahraga', 'Diskon sepatu lari', 'DemoAds', 30, config.adRewardPerView, 2],
+      ['Kopi Pagi', 'Promo kafein pagi hari', 'DemoAds', 30, config.adRewardPerView, 3],
+      ['Asuransi Digital', 'Iklan asuransi mikro', 'DemoAds', 30, config.adRewardPerView, 1],
+      ['Streaming Musik', 'Promo langganan musik', 'DemoAds', 30, config.adRewardPerView, 3],
+    ];
+    const ins = db.prepare(`INSERT INTO ads (id, title, description, advertiser, creative_url, duration_seconds, reward_points, weight, status) VALUES (?,?,?,?,?,?,?,?, 'ACTIVE')`);
+    const tx = db.transaction(() => {
+      for (const [title, desc, adv, dur, reward, weight] of ads) {
+        ins.run(uid('ad_'), title, desc, adv, '', dur, reward, weight);
+      }
+    });
+    tx();
+    console.log(`✅ Ad inventory created (${ads.length} ads, ${config.adRewardPerView} pts/view)`);
+  }
+
   console.log('✅ Seed complete.');
 }
 

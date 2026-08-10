@@ -93,4 +93,10 @@ export const API = {
     list: () => call('GET', '/api/notifications'),
     markRead: (id: string) => call('POST', '/api/notifications/' + id + '/read'),
   },
+  ads: {
+    list: () => call('GET', '/api/ads'),
+    dailyProgress: () => call('GET', '/api/ads/daily'),
+    start: () => call('POST', '/api/ads/start'),
+    complete: (viewToken: string) => call('POST', `/api/ads/view/${viewToken}/complete`),
+  },
 };
